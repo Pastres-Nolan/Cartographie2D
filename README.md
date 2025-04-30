@@ -14,3 +14,6 @@ Découverte du projet, discussion des étapes
 Création du serveur discord, du répertoire git
 
 Découverte des biliothèques
+
+
+coucou
