@@ -3,8 +3,9 @@ from spherov2.sphero_edu import SpheroEduAPI
 from spherov2.sphero_edu import EventType 
 
 toy = scanner.find_toy()
+
 with SpheroEduAPI(toy) as bot:
-    bot.set_speed(120)
+    bot.set_speed(60)
     
     def oncollision(bot):
         print("Collision")
