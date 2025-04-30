@@ -13,8 +13,9 @@ with SpheroEduAPI(toy) as bot:
     
     Thread(target = rouler).start()
     start_time = time.time()
+    
     try:
-        while True:
+        while time.time() - start_time > 1:
             velocity = bot.get_velocity()
             
             if velocity != None:
