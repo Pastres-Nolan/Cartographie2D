@@ -1,26 +1,30 @@
 from spherov2 import scanner
 from spherov2.sphero_edu import SpheroEduAPI
 from threading import Thread
+from math import sqrt
 import time
 
 toy = scanner.find_toy()
 
 with SpheroEduAPI(toy) as bot:
-    velocity = bot.get_velocity()
-    
-    if velocity != None:
-        print(f"vitesse x: {velocity['x']}")
-        print(f"vitesse y: {velocity['y']}")
         
     def rouler():
         bot.set_speed(60)
         bot.set_heading(0)
         bot.roll(0, 60, 3)
         
+    Thread(target = rouler).start()
+    start_time = time.time()
+    
     try:
         while True:
-            Thread(target = rouler).start()
-            start_time = time.time()
+            velocity = bot.get_velocity
+            
+            if velocity != None:
+                vitesse = sqrt(velocity['x']**2 + velocity['y']**2)
+                collisions = []
+                if vitesse <= 0.4:
+                    collisions.append(bot.get_location)
         
     except KeyboardInterrupt:
         print("Program stopped.")
