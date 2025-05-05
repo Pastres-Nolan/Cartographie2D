@@ -11,10 +11,24 @@ with SpheroEduAPI(toy) as bot:
     def rouler():
         bot.set_speed(60)
         bot.set_heading(0)
-        bot.roll(0, 60, 3)
+        bot.roll(0, 60, 5)
         
-    Thread(target = rouler).start()
+    thread1 = Thread(target = rouler).start()
     start_time = time.time()
+    
+    def revenir():
+        bot.set_speed(60)
+        bot.set_heading(180)
+        bot.roll(0, 60, 5)
+        
+        bot.set_heading(0)
+        bot.spin(90, 2)
+        bot.roll(0, 60, 2)
+        
+        bot.set_heading(0)
+        bot.spin(90, 2)
+        bot.roll(0, 60, 2)
+        
     
     try:
         while True:
@@ -25,8 +39,11 @@ with SpheroEduAPI(toy) as bot:
                 collisions = []
                 if vitesse <= 0.4:
                     collisions.append(bot.get_location)
-                    print(collision)
-        
+                    bot.stop()
+                    #thread1.stop()
+                    revenir()
+                    
+                    
     except KeyboardInterrupt:
         print("Program stopped.")
         bot.stop()
