@@ -1,49 +1,74 @@
 from spherov2 import scanner
 from spherov2.sphero_edu import SpheroEduAPI
-from threading import Thread
+from threading import Thread, Event
 from math import sqrt
+import random as rd
 import time
 
-toy = scanner.find_toy()
+toy = scanner.find_toy(toy_name="SB-DB73")
+
+stop_event = Event()
+pos_t = []
+
+def rouler(bot, stop_event):
+    bot.set_speed(30)
+    bot.set_heading(0)
+    bot.set_stablization(True)
+    
+    # Boucle de roulage contrôlée
+    while not stop_event.is_set():
+        bot.roll(0, 30, 1)  
+        time.sleep(0.1)     
+
+def revenir(bot):
+    pos = []
+    bot.set_speed(50)
+    
+    time.sleep(1)
+    for i in range(15):
+        heading1 = int(150+rd.random()*80)
+        if i%2 ==0 :
+            bot.roll(bot.get_heading()+heading1, 50, 5)
+        else : 
+            bot.roll(bot.get_heading()-heading1, 50, 5)
+        print('Etape',i)
+        time.sleep(1)
+        position = bot.get_location()
+        position = (position['x'],  position['y'])
+        pos.append(position)
+        print(pos)
+        
+    
+    
+
+   
+    
 
 with SpheroEduAPI(toy) as bot:
-        
-    def rouler():
-        bot.set_speed(60)
-        bot.set_heading(0)
-        bot.roll(0, 60, 5)
-        
-    thread1 = Thread(target = rouler).start()
+    # Démarre le thread
+    thread1 = Thread(target=rouler, args=(bot, stop_event))
+    thread1.start()
     start_time = time.time()
-    
-    def revenir():
-        bot.set_speed(60)
-        bot.set_heading(180)
-        bot.roll(0, 60, 5)
-        
-        bot.set_heading(0)
-        bot.spin(90, 2)
-        bot.roll(0, 60, 2)
-        
-        bot.set_heading(0)
-        bot.spin(90, 2)
-        bot.roll(0, 60, 2)
-        
-    
+
     try:
         while True:
-            velocity = bot.get_velocity
-            
-            if velocity != None:
+            velocity = bot.get_velocity()
+            if velocity is not None:
                 vitesse = sqrt(velocity['x']**2 + velocity['y']**2)
-                collisions = []
-                if vitesse <= 0.4:
-                    collisions.append(bot.get_location)
-                    bot.stop()
-                    #thread1.stop()
-                    revenir()
+                position1 = bot.get_location()
+                position1 = (position1['x'],  position1['y'])
+                pos_t.append(position1)
+                time.sleep(0.5)
+                print(pos_t[len(pos_t) - 1])
+                if vitesse <= 0.4 and time.time() - start_time > 1:
                     
-                    
+                    stop_event.set()  # Demande au thread de s'arrêter
+                    thread1.join()    # Attend que le thread s'arrête proprement
+                    revenir(bot)      # Lance la procédure de retour
+                    break             # Sort de la boucle
+
     except KeyboardInterrupt:
-        print("Program stopped.")
+        print("Programme interrompu.")
+        stop_event.set()
+        thread1.join()
         bot.stop()
