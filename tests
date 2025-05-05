@@ -25,6 +25,7 @@ with SpheroEduAPI(toy) as bot:
                 collisions = []
                 if vitesse <= 0.4:
                     collisions.append(bot.get_location)
+                    print(collision)
         
     except KeyboardInterrupt:
         print("Program stopped.")
