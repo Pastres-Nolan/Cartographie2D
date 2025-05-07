@@ -2,72 +2,57 @@ from spherov2 import scanner
 from spherov2.sphero_edu import SpheroEduAPI
 from threading import Thread, Event
 from math import sqrt
-import time
 import random as rd
+import time
+
+BOT_SPEED = 50
+COLLISION_SPEED = 0.3
+EPOCH = time.time()
+
+pos_collisions = []
+pos_all = []
 
 toy = scanner.find_toy(toy_name="SB-DB73")
+collision = Event()
 
-stop_event = Event()
-pos_t = []
-
-def rouler(bot, stop_event):
+def random_collision_SLAM(bot, collision):
+    random_heading =  140 + int(rd.random() * 80)
+    
     bot.set_speed(30)
-    bot.set_heading(0)
+    bot.set_heading(bot.get_heading() + random_heading)
     bot.set_stablization()
     
-    # Boucle de roulage contrôlée
-    while not stop_event.is_set():
-        bot.roll(0, 30, 1)  
-        time.sleep(0.1)     
-
-
-def revenir(bot):
-    pos = []
-    bot.set_speed(30)
+    while not collision.is_set():
+        bot.roll(bot.get_heading(), BOT_SPEED, 0.5)
+        curr_position = bot.get_location()
+        pos_all.append(curr_position['x'],  curr_position['y'])
+        time.sleep(0.5)
     
-    time.sleep(1)
-    for i in range(20):
-        heading1 = int(150+rd.random()*80)
-        if i%2 ==0 :
-            bot.roll(bot.get_heading()+heading1, 30, 5)
-        else : 
-            bot.roll(bot.get_heading()-heading1, 30, 5)
-        print('Etape',i)
-        time.sleep(1)
-        position = bot.get_location()
-        position = (position['x'],  position['y'])
-        pos.append(position)
-        print(pos)
-   
 
-    
+def appel_random_collision(bot, collision):
+    collision.clear()
+    random_collision_SLAM(bot, collision)
+
+
 with SpheroEduAPI(toy) as bot:
-    # Démarre le thread
-    thread1 = Thread(target=rouler, args=(bot, stop_event))
-    thread1.start()
-    start_time = time.time()
-
+    
+    thread = Thread(target = random_collision_SLAM, args = (bot, collision))
+    thread.start()
+    
     try:
         while True:
             velocity = bot.get_velocity()
-            
             if velocity is not None:
                 vitesse = sqrt(velocity['x']**2 + velocity['y']**2)
-                if vitesse <= 0.4 and time.time() - start_time > 1:
+                
+                if vitesse <= COLLISION_SPEED and time.time() - EPOCH > 1:
+                    collision_pos = bot.get_location()
+                    pos_collisions.append(collision_pos['x'],  collision_pos['y'])
+                    collision.set()
+                    time.sleep(0.5)
+                    appel_random_collision(bot, collision)
                     
-                    stop_event.set()  # Demande au thread de s'arrêter
-                    thread1.join()    # Attend que le thread s'arrête proprement
-                    revenir(bot)      # Lance la procédure de retour
-                    break             # Sort de la boucle
-        
-        while True:
-            position1 = bot.get_location()
-            position1 = (position1['x'],  position1['y'])
-            pos_t.append(position1)
-            time.sleep(0.5)
-
+                    
     except KeyboardInterrupt:
         print("Programme interrompu.")
-        stop_event.set()
-        thread1.join()
         bot.stop_roll()
