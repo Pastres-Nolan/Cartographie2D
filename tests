@@ -14,30 +14,36 @@ pos_all = []
 
 toy = scanner.find_toy(toy_name="SB-DB73")
 collision = Event()
+movement_thread_ = None
 
 def random_collision_SLAM(bot, collision):
     random_heading =  140 + int(rd.random() * 80)
-    
-    bot.set_speed(30)
+    bot.set_speed(BOT_SPEED)
     bot.set_heading(bot.get_heading() + random_heading)
-    bot.set_stablization()
+    bot.set_stabilization(True)
     
     while not collision.is_set():
-        bot.roll(bot.get_heading(), BOT_SPEED, 0.5)
         curr_position = bot.get_location()
-        pos_all.append(curr_position['x'],  curr_position['y'])
-        time.sleep(0.5)
+        pos_all.append((curr_position['x'],  curr_position['y']))
+        bot.roll(bot.get_heading(), BOT_SPEED, 0.8)
+        time.sleep(0.3)
     
 
 def appel_random_collision(bot, collision):
+    global movement_thread
     collision.clear()
-    random_collision_SLAM(bot, collision)
+    
+    if movement_thread and movement_thread.is_alive():
+        movement_thread.join()
+
+    movement_thread = Thread(target=random_collision_SLAM, args=(bot, collision))
+    movement_thread.start()
 
 
 with SpheroEduAPI(toy) as bot:
     
-    thread = Thread(target = random_collision_SLAM, args = (bot, collision))
-    thread.start()
+    movement_thread_ = Thread(target = random_collision_SLAM, args = (bot, collision))
+    movement_thread_.start()
     
     try:
         while True:
@@ -46,11 +52,15 @@ with SpheroEduAPI(toy) as bot:
                 vitesse = sqrt(velocity['x']**2 + velocity['y']**2)
                 
                 if vitesse <= COLLISION_SPEED and time.time() - EPOCH > 1:
+                    bot.stop_roll()
                     collision_pos = bot.get_location()
-                    pos_collisions.append(collision_pos['x'],  collision_pos['y'])
+                    pos_collisions.append((collision_pos['x'],  collision_pos['y']))
+                    
                     collision.set()
                     time.sleep(0.5)
                     appel_random_collision(bot, collision)
+                    
+                    print("Collision Detectee")
                     
                     
     except KeyboardInterrupt:
