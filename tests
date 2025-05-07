@@ -14,7 +14,7 @@ pos_all = []
 
 toy = scanner.find_toy(toy_name="SB-DB73")
 collision = Event()
-movement_thread_ = None
+movement_thread = None
 
 def random_collision_SLAM(bot, collision):
     random_heading =  140 + int(rd.random() * 80)
@@ -31,19 +31,19 @@ def random_collision_SLAM(bot, collision):
 
 def appel_random_collision(bot, collision):
     global movement_thread
-    collision.clear()
     
     if movement_thread and movement_thread.is_alive():
         movement_thread.join()
 
+    collision.clear()
     movement_thread = Thread(target=random_collision_SLAM, args=(bot, collision))
     movement_thread.start()
 
 
 with SpheroEduAPI(toy) as bot:
     
-    movement_thread_ = Thread(target = random_collision_SLAM, args = (bot, collision))
-    movement_thread_.start()
+    movement_thread = Thread(target = random_collision_SLAM, args = (bot, collision))
+    movement_thread.start()
     
     try:
         while True:
@@ -56,8 +56,9 @@ with SpheroEduAPI(toy) as bot:
                     collision_pos = bot.get_location()
                     pos_collisions.append((collision_pos['x'],  collision_pos['y']))
                     
+                    EPOCH = time.time()
                     collision.set()
-                    time.sleep(0.5)
+                    time.sleep(0.3)
                     appel_random_collision(bot, collision)
                     
                     print("Collision Detectee")
