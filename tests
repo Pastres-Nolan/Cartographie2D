@@ -17,7 +17,7 @@ toy = scanner.find_toy(toy_name="SB-DB73")
 def policia(bot):
     bot.set_front_led(Color(255, 0, 0))
     bot.set_back_led(Color(0, 0, 255))
-    
+    # Wee Woo
     bot.set_front_led(Color(0, 0, 255))
     bot.set_back_led(Color(255, 0, 0))
 
@@ -25,11 +25,10 @@ def policia(bot):
 def random_collision_SLAM(bot):
     bot.set_speed(BOT_SPEED)
     bot.set_heading(0)
-    bot.set_stabilize(True)
-    
-    policia(bot)
+    bot.set_stabilization(True)
     
     while True:
+        policia(bot)
         heading = int(180 + rd.random() * 50 * rd.choice([-1, 1])) 
         bot.roll(bot.get_heading() + heading, BOT_SPEED, 5)
         coll_position = bot.get_location()
@@ -38,7 +37,7 @@ def random_collision_SLAM(bot):
         time.sleep(1)
 
 
-def position_tracking(bot, stop_event, pos_all):
+def position_tracking(bot):
     dt = SAMPLING_RATE
     while True:
         velocite = bot.get_velocity()
@@ -49,13 +48,12 @@ def position_tracking(bot, stop_event, pos_all):
             x = x_initial + vx * dt
             y = y_initial + vy * dt
             pos_all.append((x, y))
-
-        time.sleep(SAMPLING_RATE)
-    
+            
+        time.sleep(dt)
     
     
 with SpheroEduAPI(toy) as bot:
-    Thread(target = random_collision_SLAM, args = (bot)).start()
+    Thread(target = position_tracking, args = (bot, )).start()
     
 
     try:
@@ -64,3 +62,4 @@ with SpheroEduAPI(toy) as bot:
     except KeyboardInterrupt:
         print("Programme interrompu.")
         bot.stop_roll()
+        print(pos_all)
