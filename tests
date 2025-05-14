@@ -1,69 +1,66 @@
 from spherov2 import scanner
 from spherov2.sphero_edu import SpheroEduAPI
-from threading import Thread, Event
-from math import sqrt
+from spherov2.types import Color
+from threading import Thread
 import random as rd
 import time
 
-BOT_SPEED = 50
-COLLISION_SPEED = 0.3
-EPOCH = time.time()
+BOT_SPEED = 30
+COLLISION_TIME = 5
+SAMPLING_RATE = 0.3
+
 
 pos_collisions = []
-pos_all = []
-
+pos_all = [(0, 0)]
 toy = scanner.find_toy(toy_name="SB-DB73")
-collision = Event()
-movement_thread = None
 
-def random_collision_SLAM(bot, collision):
-    random_heading =  140 + int(rd.random() * 80)
+def policia(bot):
+    bot.set_front_led(Color(255, 0, 0))
+    bot.set_back_led(Color(0, 0, 255))
+    
+    bot.set_front_led(Color(0, 0, 255))
+    bot.set_back_led(Color(255, 0, 0))
+
+
+def random_collision_SLAM(bot):
     bot.set_speed(BOT_SPEED)
-    bot.set_heading(bot.get_heading() + random_heading)
-    bot.set_stabilization(True)
+    bot.set_heading(0)
+    bot.set_stabilize(True)
     
-    while not collision.is_set():
-        curr_position = bot.get_location()
-        pos_all.append((curr_position['x'],  curr_position['y']))
-        bot.roll(bot.get_heading(), BOT_SPEED, 0.8)
-        time.sleep(0.3)
+    policia(bot)
     
+    while True:
+        heading = int(180 + rd.random() * 50 * rd.choice([-1, 1])) 
+        bot.roll(bot.get_heading() + heading, BOT_SPEED, 5)
+        coll_position = bot.get_location()
+        coll_position = (coll_position['x'],  coll_position['y'])
+        pos_collisions.append(coll_position)
+        time.sleep(1)
 
-def appel_random_collision(bot, collision):
-    global movement_thread
+
+def position_tracking(bot, stop_event, pos_all):
+    dt = SAMPLING_RATE
+    while True:
+        velocite = bot.get_velocity()
+        
+        if velocite:
+            vx, vy = velocite['x'], velocite['y']
+            x_initial, y_initial = pos_all[-1]
+            x = x_initial + vx * dt
+            y = y_initial + vy * dt
+            pos_all.append((x, y))
+
+        time.sleep(SAMPLING_RATE)
     
-    if movement_thread and movement_thread.is_alive():
-        movement_thread.join()
-
-    collision.clear()
-    movement_thread = Thread(target=random_collision_SLAM, args=(bot, collision))
-    movement_thread.start()
-
-
+    
+    
 with SpheroEduAPI(toy) as bot:
+    Thread(target = random_collision_SLAM, args = (bot)).start()
     
-    movement_thread = Thread(target = random_collision_SLAM, args = (bot, collision))
-    movement_thread.start()
-    
+
     try:
-        while True:
-            velocity = bot.get_velocity()
-            if velocity is not None:
-                vitesse = sqrt(velocity['x']**2 + velocity['y']**2)
-                
-                if vitesse <= COLLISION_SPEED and time.time() - EPOCH > 1:
-                    bot.stop_roll()
-                    collision_pos = bot.get_location()
-                    pos_collisions.append((collision_pos['x'],  collision_pos['y']))
-                    
-                    EPOCH = time.time()
-                    collision.set()
-                    time.sleep(0.3)
-                    appel_random_collision(bot, collision)
-                    
-                    print("Collision Detectee")
-                    
-                    
+        random_collision_SLAM(bot)    
+            
     except KeyboardInterrupt:
         print("Programme interrompu.")
         bot.stop_roll()
