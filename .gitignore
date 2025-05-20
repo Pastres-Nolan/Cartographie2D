@@ -1,2 +1,5 @@
 # Environnement virtuel
 venv/
+
+# Fichiers compilés Python
+__pycache__/
