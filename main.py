@@ -1,32 +1,11 @@
-from spherov2 import scanner
-from spherov2.sphero_edu import SpheroEduAPI
-from spherov2.types import Color
-import time
-import threading
+# ficihier qui fait tourner l'ensemble
 
-toy = scanner.find_toy()
+import random as rd
+from interface import Interface
+from traitement import *
 
-def rouler(bot):
-    bot.roll(0, 200, 5)  # roule à 200 pendant 5 secondes
+ui = Interface()
 
-with SpheroEduAPI(toy) as bot:
-    bot.set_main_led(Color(r=0, g=255, b=0))
+# du code ici
 
-    threading.Thread(target=rouler, args=(bot,)).start()
-
-    try:
-        start_time = time.time()
-        while True:
-            velocity = bot.get_velocity()
-            #print(f"Vitesse: {velocity}",type(velocity))
-
-            if velocity != None:
-                if abs(velocity['x'])<1:
-                  #  print("collision x")
-                  pass
-                elif abs(velocity['y'])<1:
-                    print("collision y")
-                
-            time.sleep(0.1)
-    except KeyboardInterrupt:
-        print("Program stopped.")
+ui.draw()
