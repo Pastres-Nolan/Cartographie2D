@@ -7,6 +7,7 @@ Code toujours en cours de modification
 
 import tkinter as tk
 from math import sqrt
+import random as rd
 import tkinter.messagebox as tkm
 
 
