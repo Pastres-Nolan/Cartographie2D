@@ -1,11 +1,11 @@
 # ficihier qui fait tourner l'ensemble
 
-import random as rd
 from interface import Interface
 from traitement import *
 
-ui = Interface()
+if __name__ == "__main__":
+    ui = Interface()
 
-# du code ici
+    # du code ici
 
-ui.draw()
+    ui.draw()
