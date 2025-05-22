@@ -5,7 +5,11 @@ class FK:
         self.x = np.zeros((4, 1)) 
         self.P = np.eye(4)
         self.dt = 0.1
-        self.Q = np.eye(4) * 0.01
+        self.Q = np.array([[1, 0, 0, 0],
+                           [0, 1, 0, 0],
+                           [0, 0, 1, 0],
+                           [1, 0, 0, 1]]) * 0.5
+        
         self.H = np.array([[1, 0, 0, 0],
                            [0, 1, 0, 0]])
 
