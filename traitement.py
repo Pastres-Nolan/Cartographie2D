@@ -1,9 +1,4 @@
 # fichier pour traiter les données récupérées
-"""
-
-Code pour merge l'interface et le traitement des données
-Code toujours en cours de modification
-"""
 
 import tkinter as tk
 from math import sqrt
