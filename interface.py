@@ -8,7 +8,7 @@ import tkinter.messagebox as tkm
 from PIL import Image, ImageTk
 
 
-class interface :
+class Interface :
     
     def __init__(self):
         self.window = tk.Tk()
@@ -96,6 +96,3 @@ class interface :
     def run(self):
         self.window.mainloop()
     
-
-app = interface()  
-app.run()  

@@ -21,5 +21,4 @@ if __name__ == "__main__":
     test4 = afficher_point(tableau_arrondie,distance_min,aggrandissement,decalage_x,decalage_y,'blue', fenetre)
     #meme_point = point_egaux(tableau_corrige)
     #print(f"Il y a {meme_point} point égaux")
-
-    fenetre.draw()
+    fenetre.run()
