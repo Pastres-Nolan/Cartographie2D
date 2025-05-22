@@ -1,7 +1,6 @@
+# ficihier qui fait l'affichage
 
 
-""" 22/05/2025
-Fichier pour l'interface """
 
 import tkinter as tk
 import tkinter.messagebox as tkm

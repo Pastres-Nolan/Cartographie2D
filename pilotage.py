@@ -45,6 +45,8 @@ def random_collision_SLAM(bot):
         collision_position = (collision_position['x'],  collision_position['y'])
         
         pos_collisions.append(collision_position) # Rajoute la position a laquelle il y a (normalement) eu une collision
+        
+        np.save('positions.npy', np.array(pos_all))
         time.sleep(1)
 
 
