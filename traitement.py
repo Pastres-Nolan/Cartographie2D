@@ -5,6 +5,7 @@ import tkinter as tk
 from math import sqrt
 import random as rd
 import numpy as np
+from test_Nolan import random_collision_SLAM
 
 window = tk.Tk()
 canvas = tk.Canvas(window, bg = 'white', width=900, height=500)

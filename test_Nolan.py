@@ -6,7 +6,7 @@ import random as rd
 import tkinter as tk
 import time
 from math import sqrt
-import filtre_Kalman as Fk
+import filtre_kalman as Fk
 import numpy as np
 from bleak import BleakClient
 import asyncio 
@@ -58,9 +58,8 @@ def random_collision_SLAM(bot):
             
 
             pos_collisions.append((new_x,new_y))
-
-        np.save('positions.py',np.array(pos_all))
-
+        
+       
 
 def position_tracking(bot):
     dt = SAMPLING_RATE
@@ -133,6 +132,7 @@ with SpheroEduAPI(toy) as bot:
     except KeyboardInterrupt:
         print("Programme interrompu.")
         asyncio.run(deconnecter(adresse))
+        print(pos_collisions)
         bot.stop_roll()
         # Lancer automatiquement le fichier d'affichage à la fin
 

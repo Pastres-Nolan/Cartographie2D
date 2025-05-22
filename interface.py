@@ -1,14 +1,11 @@
-# ficihier qui fait l'affichage
-
-
-
 import tkinter as tk
 import tkinter.messagebox as tkm
 from PIL import Image, ImageTk
+from pilotage import Pilotage
+import threading
 
+class Interface:
 
-class Interface :
-    
     def __init__(self):
         self.window = tk.Tk()
         self.window.title("zone detector 3000")
@@ -19,72 +16,97 @@ class Interface :
         self.width_window = widht_screen - 200
         self.height_window = height_screen - 200
 
-        self.canvas = tk.Canvas(self.window, bg ='black', width = self.width_window + 100, height = self.height_window)
+        self.canvas = tk.Canvas(self.window, bg='black', width=self.width_window + 100, height=self.height_window)
         self.canvas.grid()
 
-        self.ball1 = self.canvas.create_oval(10, 10, 25, 25, fill = 'white') #balle qui represente le statut (start/stop)
-        self.Ok = False #True si une zone est créee False sinon
-        self.carre = None 
+        self.ball1 = self.canvas.create_oval(10, 10, 25, 25, fill='white')
+        self.Ok = False
+        self.carre = None
         self.boutons = []
         img = Image.open("detector3000.png")
         img = img.resize((800, 600), Image.LANCZOS)
         self.im = ImageTk.PhotoImage(img)
-        self.image = self.canvas.create_image(self.width_window // 2, self.height_window // 2, image = self.im)
+        self.image = self.canvas.create_image(self.width_window // 2, self.height_window // 2, image=self.im)
         self.b = ["Point", "Contour", "Point Corrigé"]
 
-        #creation du menu
+        # Menu
         menubar = tk.Menu(self.window)
+        menu0 = tk.Menu(menubar, tearoff=0)
+        menu0.add_command(label="Nouveau", command=self.zone)
+        menu0.add_command(label="Suprimer", command=self.supzone)
+        menubar.add_cascade(label="Zone", menu=menu0)
 
-        #creation des options du menu
-        menu0 = tk.Menu(menubar, tearoff = 0)
-        menu0.add_command(label = "Nouveau", command = self.zone)
-        menu0.add_command(label ="Suprimer", command  = self.supzone)
-        menubar.add_cascade(label = "Zone", menu = menu0) 
+        self.menu1 = tk.Menu(menubar, tearoff=0)
+        self.boutonstart = self.menu1.add_command(label="Start", command=self.start)
+        self.menu1.add_command(label="Stop", command=self.stop)
+        self.menu1.add_separator()
+        self.menu1.add_command(label="EXIT", command=self.pop)
+        menubar.add_cascade(label="Analyse", menu=self.menu1)
 
-        menu1 = tk.Menu(menubar, tearoff=0)
-        menu1.add_command(label ="Start", command = self.start)
-        menu1.add_command(label ="Stop", command = self.stop)
-        menu1.add_separator()
-        menu1.add_command(label ="EXIT", command = self.pop)
-        menubar.add_cascade(label ="Analyse", menu = menu1)
+        menu2 = tk.Menu(menubar, tearoff=0)
+        menu2.add_command(label="UPLOAD", command=self.upload)
+        menubar.add_cascade(label="Sauvegarder", menu=menu2)
 
-        menu2 = tk.Menu(menubar, tearoff = 0)
-        menu2.add_command(label ="UPLOAD", command = self.upload)
-        menubar.add_cascade(label = "Sauvegarder", menu = menu2) 
+        self.window.config(menu=menubar)
 
-        #configuration du menu
-        self.window.config(menu=menubar) 
+        # Initialisation du pilotage en thread
+        self.pilotage = None
+        threading.Thread(target=self.init_pilotage, daemon=True).start()
 
-        
+    def init_pilotage(self):
+        try:
+            self.pilotage = Pilotage()
+        except Exception as e:
+            tkm.showerror("Erreur Bluetooth", f"Connexion au robot échouée :\n{e}")
+
     def start(self):
-        if self.Ok:
-            self.canvas.itemconfig(self.ball1, fill = "green")               #balle : vert , statut : start
+        if not self.pilotage:
+            tkm.showerror("Erreur", "Connexion au robot non terminée.")
+            return
+
+        if self.Ok :
+            self.canvas.itemconfig(self.ball1, fill="green")
+            threading.Thread(target=self.pilotage.start, daemon=True).start()
+            self.menu1.entryconfig("Start", command = self.move_bot)
         else:
-            tkm.showerror("No zone", "Créer une nouvelle zone dans Zone")    #affiche l'erreur "pas de zone"
-            
+            tkm.showerror("No zone", "Créer une nouvelle zone dans Zone")
+
+
+    def move_bot(self):
+        print("Hola")
+        if self.pilotage:
+            self.pilotage.start_moving()
+
+
     def stop(self):
-        self.canvas.itemconfig(self.ball1, fill = "red")                     #balle : rouge , statut : stop
-    
+        self.canvas.itemconfig(self.ball1, fill="red")
+        if self.pilotage:
+            self.pilotage.stop_moving()
+
     def zone(self):
         self.canvas.delete(self.image)
         self.Ok = True
-        zone1 = self.canvas.create_rectangle(self.width_window - self.width_window*0.94, self.height_window - self.height_window*0.90,                #delimitation du terrain de jeu pour les analyses
-                                              self.width_window, self.height_window - 60, outline = "ivory", width = 2)   
-        self.carre = zone1 
-        for i in range (len(self.b)):
-            button = tk.Button(self.window, text = self.b[i], command = None,width = 13)
+        zone1 = self.canvas.create_rectangle(
+            self.width_window - self.width_window * 0.94,
+            self.height_window - self.height_window * 0.90,
+            self.width_window,
+            self.height_window - 60,
+            outline="ivory", width=2)
+        self.carre = zone1
+        for i in range(len(self.b)):
+            button = tk.Button(self.window, text=self.b[i], command=None, width=13)
             self.boutons.append(button)
-            button.place(x=self.width_window - self.width_window*0.96 + i * 110, y = 10)
-            
+            button.place(x=self.width_window - self.width_window * 0.96 + i * 110, y=10)
+
     def supzone(self):
         self.Ok = False
         self.canvas.delete(self.carre)
         for btn in self.boutons:
-            btn.destroy()       #vide les boutons dans la liste boutons
-        self.boutons.clear()    #supprime les boutons dans l'interface
+            btn.destroy()
+        self.boutons.clear()
 
-    def pop(self):                                         
-        if tkm.askyesno('EXIT', 'Voulez vous quitter?'):    #double check si on veut quitter
+    def pop(self):
+        if tkm.askyesno('EXIT', 'Voulez-vous quitter?'):
             self.window.destroy()
         else:
             tkm.showerror("Go", "OK")
@@ -94,4 +116,10 @@ class Interface :
 
     def run(self):
         self.window.mainloop()
+
     
+        
+
+if __name__ == "__main__":
+    app = Interface()
+    app.run()
