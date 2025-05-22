@@ -1,30 +1,30 @@
 from spherov2 import scanner
 from spherov2.sphero_edu import SpheroEduAPI
 from spherov2.types import Color
-from threading import Thread
+import numpy as np
+import filtre_kalman as Fk
+from threading import Thread, Event
 import random as rd
-import tkinter as tk
 import time
-from math import sqrt
 
-BOT_SPEED = 40
+BOT_SPEED = 30
 COLLISION_TIME = 5
 SAMPLING_RATE = 0.1
 
-# Initialisation de l'interface tkinter
-root = tk.Tk()
-canvas = tk.Canvas(root, bg="white", width=800, height=800)
-canvas.pack()
+
+fk = Fk.FK()
+
+collision = Event()
 
 pos_collisions = []
-pos_all = [(0, 0)]  # Centre du canvas pour éviter les valeurs négatives
+pos_all = [(0, 0)]
 
 toy = scanner.find_toy(toy_name="SB-DB73")
-
 
 def policia(bot):
     bot.set_front_led(Color(255, 0, 0))
     bot.set_back_led(Color(0, 0, 255))
+    # Wee Woo
     bot.set_front_led(Color(0, 0, 255))
     bot.set_back_led(Color(255, 0, 0))
 
@@ -35,71 +35,50 @@ def random_collision_SLAM(bot):
     bot.set_stabilization(True)
     
     while True:
+        heading = 180 + rd.choice([-1, 1]) * rd.randint(50)
+        collision.is_set() # Arrete la mise a jour des positions pendant que le robot tourne
+        bot.spin(heading, 1) 
+        collision.clear() # Mettre en marche la mise a jour des positions
+        bot.roll(bot.get_heading(), BOT_SPEED, 5) # Marche tout droit
         
-        heading = int(195 + rd.random() * 50 * rd.choice([-1, 1])) 
-        bot.roll(bot.get_heading() + 120, BOT_SPEED, COLLISION_TIME)
-        time.sleep(SAMPLING_RATE)
+        collision_position = pos_all[-1]
+        collision_position = (collision_position['x'],  collision_position['y'])
+        
+        pos_collisions.append(collision_position) # Rajoute la position a laquelle il y a (normalement) eu une collision
+        time.sleep(1)
 
 
 def position_tracking(bot):
     dt = SAMPLING_RATE
-    
-    while True:
-        velocite = bot.get_velocity()
-        acc = bot.get_acceleration()
+    while not collision.is_set():
         policia(bot)
         
-        if velocite and acc:
+        velocite = bot.get_velocity()
+        acceleration = bot.get_acceleration()
+        if velocite and acceleration:
             vx, vy = velocite['x'], velocite['y']
-            x_initial, y_initial = pos_all[-1]
+            ax, ay = acceleration['x'], acceleration['y']
+            vel = np.array([[vx], [vy]])
+            acc = np.array([[ax], [ay]])  
+            fk.kalman_predict(vel, acc) # On predit la mesure par le filtre de Kalman
             
-            accx, accy = acc['x'], acc['y']
-            x = x_initial + vx * dt + (1/2) * accx * dt**2
-            y = y_initial + vy * dt + (1/2) * accy * dt**2
-            pos_all.append((x, y))
+            z = bot.get_location()
+            mesure = np.array([ [z['x']], [z['y']] ])
             
+            fk.kalman_update(mesure) # On met a jour le filtre de Kalman avec la poisition mesuree
+            position = tuple(float(x) for x in fk.get_position.ravel())
+            pos_all.append(position)
             
-            if sqrt(vx**2 + vy**2) < 3:
-                pos_collisions.append((x, y))
-                print(pos_collisions)
-        time.sleep(SAMPLING_RATE)
-
-
-def update_canvas():
-    aggrandissement = 8
-    decalage = 400
-    rayon = 5
+        time.sleep(dt)
     
-    canvas.delete("all")
-
-    for i in range(1, len(pos_all)):
-        x1, y1 = pos_all[i - 1]
-        x2, y2 = pos_all[i]
-        x1p = x1 * aggrandissement + decalage
-        x2p = x2 * aggrandissement + decalage
-        y1p = y1 * aggrandissement + decalage
-        y2p = y2 * aggrandissement + decalage
-        canvas.create_line(x1p, y1p, x2p, y2p, fill="blue")
     
-   
-    for (xc, yc) in pos_collisions:
-        x1c = xc * aggrandissement + decalage - rayon
-        x2c = xc * aggrandissement + decalage + rayon
-        y1c = yc * aggrandissement + decalage - rayon
-        y2c = yc * aggrandissement + decalage + rayon
-        canvas.create_oval(x1c, y1c, x2c, y2c, fill='red')
-    
-    root.after(100, update_canvas)
-
-
 with SpheroEduAPI(toy) as bot:
-    Thread(target=position_tracking, args=(bot,)).start()
-    
+    Thread(target = position_tracking, args = (bot, )).start()
+
     try:
-        Thread(target=random_collision_SLAM, args=(bot,)).start()
-        update_canvas()
-        root.mainloop()
-        
+        random_collision_SLAM(bot)    
+            
     except KeyboardInterrupt:
-        print("Programme interrompu.")
         bot.stop_roll()
+        print("Programme interrompu.")
+        print(pos_all)
