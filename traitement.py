@@ -1,70 +1,10 @@
 # fichier pour traiter les données récupérées
 
+
+
 import tkinter as tk
 from math import sqrt
 import random as rd
-import tkinter.messagebox as tkm
-
-
-class interface :
-    
-    def __init__(self):
-        self.window = tk.Tk()
-        self.window.title( "zone detector 3000" )
-
-        self.canvas = tk.Canvas(self.window, bg = 'light gray', width=1500, height=700)
-        self.canvas.pack()
-        self.ball1 = self.canvas.create_oval(10, 10, 25, 25, fill = 'white') 
-        self.Ok = False 
-        self.carre = None 
-        self.bouton = []
-        self.b = ["Point", "Contour", "Point Corrigé"]
-
-        self.menubar = tk.Menu(self.window)
-
-        menu0 = tk.Menu(self.menubar, tearoff=0)
-        menu0.add_command(label="Nouveau", command= self.zone)
-        self.menubar.add_cascade(label = "Zone", menu = menu0) #creation des options du menu
-
-        menu1 = tk.Menu(self.menubar, tearoff=0)
-        menu1.add_command(label="Start", command= self.start)
-        menu1.add_command(label="Stop", command= self.stop)
-        menu1.add_separator()
-        menu1.add_command(label="EXIT", command=self.pop)
-        self.menubar.add_cascade(label="Analyse", menu=menu1)
-    
-    def start(self):
-        if self.Ok:
-            self.canvas.itemconfig(self.ball1, fill = "green") 
-        else:
-            tkm.showerror("No zone", "Créer une nouvelle zone dans Zone") 
-
-    def stop(self):
-        self.canvas.itemconfig(self.ball1, fill = "red") 
-    
-    def pop (self): 
-            if tkm.askyesno('EXIT', 'Voulez vous quitter?'):
-                self.window.destroy()
-            else:
-                tkm.showerror("Go", "OK")
-
-    def zone(self):
-        zone1 = self.canvas.create_rectangle(50, 50, 1050, 850, outline = "ivory", width = 2) 
-        self.Ok = True
-        self.carre = zone1 
-        for i in range (len(self.b)):
-            button = tk.Button(self.window, text = self.b[i], command = None)
-            self.bouton.append(button)
-            button.pack(side = "left", padx = 5+i)
-    
-    def draw(self):
-        self.window.config(menu=self.menubar) 
-        self.window.mainloop()
-
-
-
-
-showtime_interface = interface()    
 
 
 distance_min = 3
@@ -86,7 +26,7 @@ for i in range(len(tableau)):
 
 
 
-def relierpoint(tableau_pts,distance_min,aggrandissement,decalage_x,decalage_y,rayon):
+def relierpoint(tableau_pts,distance_min,aggrandissement,decalage_x,decalage_y,rayon,fenetre):
     for pt1 in range(len(tableau_pts)):
         x1 = tableau_pts[pt1][0]
         y1 = tableau_pts[pt1][1]
@@ -101,7 +41,7 @@ def relierpoint(tableau_pts,distance_min,aggrandissement,decalage_x,decalage_y,r
                 x2_affichage = decalage_x + x2*aggrandissement
                 y1_affichage = decalage_y + y1*aggrandissement
                 y2_affichage = decalage_y + y2*aggrandissement
-                line = showtime_interface.canvas.create_line(x1_affichage ,y1_affichage ,x2_affichage ,y2_affichage ,fill = "black")
+                line = fenetre.canvas.create_line(x1_affichage ,y1_affichage ,x2_affichage ,y2_affichage ,fill = "black")
 
     
 def corriger_point(tableau_colision):
@@ -172,7 +112,7 @@ def point_egaux(tableau):
     
     return pt_egaux
 
-def afficher_point(tableau_pts,distance_min,aggrandissement,decalage_x,decalage_y,couleur):
+def afficher_point(tableau_pts,distance_min,aggrandissement,decalage_x,decalage_y,couleur,fenetre):
     for pt1 in range(len(tableau_pts)):
         x1 = tableau_pts[pt1][0]
         y1 = tableau_pts[pt1][1]
@@ -180,19 +120,4 @@ def afficher_point(tableau_pts,distance_min,aggrandissement,decalage_x,decalage_
         x2p_affichage = x1 + rayon
         y1p_affichage = y1 - rayon
         y2p_affichage = y1 + rayon
-        point = showtime_interface.canvas.create_oval(x1p_affichage, y1p_affichage, x2p_affichage, y2p_affichage, fill=couleur)
-
-
-tableau_arrondie = arrondire_point(tableau_réaliste ,aggrandissement,decalage_x,decalage_y)
-tableau_corrige = corriger_point(tableau_arrondie) 
-#print(tableau_corrige)
-test1 = relierpoint(tableau_corrige, distance_min,aggrandissement,decalage_x,decalage_y,rayon)
-#test2 = afficher_point(tableau_réaliste,distance_min,aggrandissement,decalage_x,decalage_y,'purple')
-#test3 = afficher_point(tableau_corrige,distance_min,aggrandissement,decalage_x,decalage_y,'green')
-test4 = afficher_point(tableau_arrondie,distance_min,aggrandissement,decalage_x,decalage_y,'blue')
-
-
-#meme_point = point_egaux(tableau_corrige)
-#print(f"Il y a {meme_point} point égaux")
-
-showtime_interface.draw()
+        point = fenetre.canvas.create_oval(x1p_affichage, y1p_affichage, x2p_affichage, y2p_affichage, fill=couleur)
