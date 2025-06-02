@@ -44,7 +44,8 @@ class Pilotage:
 
     def position_tracking(self):
         dt = self.SAMPLING_RATE
-        while not self.collision.is_set():
+        while True:
+            #if not self.collision.is_set():
             self.policia()
             velocite = self.bot.get_velocity()
             acceleration = self.bot.get_acceleration()
@@ -60,17 +61,33 @@ class Pilotage:
                 self.fk.kalman_update(mesure)
                 position = tuple(float(x) for x in self.fk.get_position.ravel())
                 self.pos_all.append(position)
+                print(position)  # Debug print
+            else:
+                print("Collision active — pausing position update" + str(time.time())) 
             time.sleep(dt)
 
+    def position(self):
+        return self.pos_all
+
     def start(self):
+        #self.running.clear()
         with self.bot:
-            Thread(target=self.position_tracking).start()
+            tracking_thread = Thread(target=self.position_tracking, name="TrackingThread")
+            tracking_thread.start()
             try:
                 self.random_collision_SLAM()
             except KeyboardInterrupt:
                 self.bot.stop_roll()
+                self.running.set()
+                tracking_thread.join()
                 print("Program interrupted.")
-                print(self.pos_all)
+            finally:
+            
+                self.stop_moving()
+                self.tracking_thread.join()
+
+
+                
 
     def stop_moving(self):
         self.running.set()

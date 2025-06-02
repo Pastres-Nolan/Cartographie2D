@@ -3,6 +3,7 @@ import tkinter.messagebox as tkm
 from PIL import Image, ImageTk
 from pilotage import Pilotage
 import threading
+import time 
 
 class Interface:
 
@@ -18,7 +19,7 @@ class Interface:
 
         self.canvas = tk.Canvas(self.window, bg='black', width=self.width_window + 100, height=self.height_window)
         self.canvas.grid()
-
+        
         self.ball1 = self.canvas.create_oval(10, 10, 25, 25, fill='white')
         self.Ok = False
         self.carre = None
@@ -47,17 +48,38 @@ class Interface:
         menu2.add_command(label="UPLOAD", command=self.upload)
         menubar.add_cascade(label="Sauvegarder", menu=menu2)
 
+        self.position = []
         self.window.config(menu=menubar)
 
         # Initialisation du pilotage en thread
-        self.pilotage = None
+        self.pilotage = Pilotage()
         threading.Thread(target=self.init_pilotage, daemon=True).start()
 
     def init_pilotage(self):
         try:
             self.pilotage = Pilotage()
+            while True:
+                self.position.append(self.pilotage.pos_all[-1]) 
+                self.update_canvas()
+                time.sleep(0.1)
+
         except Exception as e:
             tkm.showerror("Erreur Bluetooth", f"Connexion au robot échouée :\n{e}")
+
+    def update_canvas(self):
+        aggrandissement = 3
+        decalage = 400
+
+        for i in range(1, len(self.position)):
+            x1, y1 = self.position[i - 1]   
+            x2, y2 = self.position[i]
+        
+            x1p = x1 * aggrandissement + decalage
+            x2p = x2 * aggrandissement + decalage
+            y1p = y1 * aggrandissement + decalage
+            y2p = y2 * aggrandissement + decalage
+            self.canvas.create_line(x1p, y1p, x2p, y2p, fill="ivory")
+        
 
     def start(self):
         if not self.pilotage:
@@ -73,7 +95,6 @@ class Interface:
 
 
     def move_bot(self):
-        print("Hola")
         if self.pilotage:
             self.pilotage.start_moving()
 
