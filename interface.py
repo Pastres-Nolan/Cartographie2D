@@ -2,9 +2,12 @@ import tkinter as tk
 import tkinter.messagebox as tkm
 from tkinter import simpledialog
 from PIL import Image, ImageTk, ImageGrab
+from tkinter import simpledialog
+from PIL import Image, ImageTk, ImageGrab
 from pilotage import Pilotage
 from math import sin,cos
 import threading
+import os
 import os
 import time 
 
@@ -21,6 +24,10 @@ class Interface:
 
         self.canvas = tk.Canvas(self.window, bg='black', width=self.width_window + 100, height=self.height_window)
         self.canvas.grid()
+
+        self.canvas.bind("<Button-1>", self.on_click)
+        
+        self.ball1 = self.canvas.create_oval(10, 10, 35, 35, fill='white')
 
         self.canvas.bind("<Button-1>", self.on_click)
         
@@ -47,8 +54,10 @@ class Interface:
         self.menu1.add_separator()
         self.menu1.add_command(label="EXIT", command=self.pop)
         menubar.add_cascade(label="Mouvement", menu=self.menu1)
+        menubar.add_cascade(label="Mouvement", menu=self.menu1)
 
         menu2 = tk.Menu(menubar, tearoff=0)
+        menu2.add_command(label="DOWNLOAD", command=self.download_canva)
         menu2.add_command(label="DOWNLOAD", command=self.download_canva)
         menubar.add_cascade(label="Sauvegarder", menu=menu2)
 
@@ -104,7 +113,6 @@ class Interface:
         if self.pilotage:
             self.pilotage.start_moving()
 
-
     def stop(self):
         self.canvas.itemconfig(self.ball1, fill="red")
         if self.pilotage:
@@ -152,6 +160,7 @@ class Interface:
             self.width_window - self.width_window * 0.94,
             self.height_window - self.height_window * 0.90,
             self.width_window,self.height_window - 60, outline="ivory", width=2)
+            self.width_window,self.height_window - 60, outline="ivory", width=2)
         self.carre = zone1
 
         self.button_name = ["Contour", "Rotation"]
@@ -179,6 +188,7 @@ class Interface:
 
     def run(self):
         self.window.mainloop()
+
 
 
 if __name__ == "__main__":
