@@ -157,10 +157,10 @@ class Interface:
         self.canvas.itemconfigure(self.image, state='hidden')
         self.Ok = True
         zone1 = self.canvas.create_rectangle(
-            self.width_window - self.width_window * 0.94,
-            self.height_window - self.height_window * 0.90,
-            self.width_window,self.height_window - 60, outline="ivory", width=2)
-            self.width_window,self.height_window - 60, outline="ivory", width=2)
+        self.width_window - self.width_window * 0.94,
+        self.height_window - self.height_window * 0.90,
+        self.width_window,self.height_window - 60, outline="ivory", width=2)
+
         self.carre = zone1
 
         self.button_name = ["Contour", "Rotation"]
