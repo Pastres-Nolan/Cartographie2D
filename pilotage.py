@@ -70,6 +70,10 @@ class Pilotage:
 
     def position(self):
         return self.pos_all[-1]
+    
+
+    def position_coll(self):
+        return self.pos_collisions
 
 
     def start(self):

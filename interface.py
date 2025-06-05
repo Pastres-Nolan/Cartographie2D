@@ -8,8 +8,7 @@ from pilotage import Pilotage
 from math import sin,cos
 import threading
 import os
-import os
-import time 
+
 
 class Interface:
     def __init__(self):
@@ -54,11 +53,10 @@ class Interface:
         self.menu1.add_separator()
         self.menu1.add_command(label="EXIT", command=self.pop)
         menubar.add_cascade(label="Mouvement", menu=self.menu1)
-        menubar.add_cascade(label="Mouvement", menu=self.menu1)
-
+        
         menu2 = tk.Menu(menubar, tearoff=0)
         menu2.add_command(label="DOWNLOAD", command=self.download_canva)
-        menu2.add_command(label="DOWNLOAD", command=self.download_canva)
+        
         menubar.add_cascade(label="Sauvegarder", menu=menu2)
 
         self.window.config(menu=menubar)
@@ -76,6 +74,7 @@ class Interface:
             self.update_position()
         except Exception as e:
             tkm.showwarning("Erreur Bluetooth", f"Connexion au robot échouée :\n{e}")
+
     
     def update_position(self):
         try:
@@ -84,6 +83,7 @@ class Interface:
             self.window.after(200, self.update_position) 
         except Exception as e:
             print(f"Error updating position: {e}")
+
 
     def update_canvas(self):
         aggrandissement = 3
