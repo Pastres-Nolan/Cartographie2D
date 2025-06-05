@@ -1,4 +1,3 @@
-from pilotage import Pilotage
 import interface as root
 
 if __name__ == "__main__":

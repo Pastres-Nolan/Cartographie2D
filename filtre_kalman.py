@@ -53,4 +53,3 @@ class FK:
     def get_position(self):
         return self.x[:2]  
     
-
