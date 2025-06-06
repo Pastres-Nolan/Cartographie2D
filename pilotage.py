@@ -13,6 +13,8 @@ class Pilotage:
         self.BOT_SPEED = bot_speed
         self.COLLISION_TIME = collision_time
         self.SAMPLING_RATE = sampling_rate
+        self.EPOCH = time.time()
+        self.recoit_donnees = False
 
         self.fk = Fk.FK()
         self.collision = False
@@ -22,6 +24,8 @@ class Pilotage:
 
         self.toy = scanner.find_toy(toy_name=toy_name)
         self.bot = SpheroEduAPI(self.toy)
+
+
 
 
     def policia(self):
@@ -36,14 +40,17 @@ class Pilotage:
         self.bot.set_speed(self.BOT_SPEED)
         self.bot.set_heading(0)
         self.bot.set_stabilization(True)
-
+       
         while not self.running.is_set():
-            if self.BOT_SPEED:
-                self.bot.roll(self.bot.get_heading() + 180 + 50 * rd.randint(-1, 1), self.BOT_SPEED, 2)
+            #print("Données reçues" if self.recoit_donnees else "Aucune donnée") # defois le robot ne fonctionne juste pas
+            self.recoit_donnees = False  
+            if self.BOT_SPEED and (time.time()-self.EPOCH) >7: # permet de ne pas prendre le départ du robot comme point de collision (le départ est à 4-5 secondes)
+                self.bot.roll(self.bot.get_heading() + 180 + 50 * rd.randint(-1, 1), self.BOT_SPEED, 1)
                 for i in range(4):
                     self.bot.roll(self.bot.get_heading(), self.BOT_SPEED, 1)
                 collision_position = self.pos_all[-1]
                 self.pos_collisions.append(collision_position)
+                
             time.sleep(1)
 
 
@@ -53,7 +60,9 @@ class Pilotage:
             self.policia()
             velocite = self.bot.get_velocity()
             acceleration = self.bot.get_acceleration()
-            if velocite and acceleration:
+            if velocite and acceleration :
+                
+                self.recoit_donnees = True
                 vx, vy = velocite['x'], velocite['y']
                 ax, ay = acceleration['x'], acceleration['y']
                 vel = np.array([[vx], [vy]])
@@ -65,15 +74,14 @@ class Pilotage:
                 self.fk.kalman_update(mesure)
                 position = tuple(float(x) for x in self.fk.get_position.ravel())
                 self.pos_all.append(position)
+                self.pos_all.pop(0)
+                
+              
                 time.sleep(dt)
 
 
     def position(self):
         return self.pos_all[-1]
-    
-
-    def position_coll(self):
-        return self.pos_collisions
 
 
     def start(self):
@@ -84,7 +92,6 @@ class Pilotage:
             except KeyboardInterrupt:
                 self.bot.stop_roll()
                 print("Program interrupted.")
-                print(self.pos_all)
 
 
     def stop_moving(self):

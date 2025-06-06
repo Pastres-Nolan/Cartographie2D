@@ -2,31 +2,31 @@ import tkinter as tk
 import tkinter.messagebox as tkm
 from tkinter import simpledialog
 from PIL import Image, ImageTk, ImageGrab
-from tkinter import simpledialog
-from PIL import Image, ImageTk, ImageGrab
 from pilotage import Pilotage
 from math import sin,cos
+import traitement as Tr
 import threading
 import os
+import time
 
 
 class Interface:
     def __init__(self):
-        self.window = tk.Tk()
-        self.window.title("zone detector 3000")
 
-        widht_screen = self.window.winfo_screenwidth()
+        self.tr = Tr.Traitement()
+        self.EPOCH = time.time()
+        
+        self.window = tk.Tk()
+        self.window.title("Zone detector 3000")
+
+        width_screen = self.window.winfo_screenwidth()
         height_screen = self.window.winfo_screenheight()
 
-        self.width_window = widht_screen - 200
+        self.width_window = width_screen - 200
         self.height_window = height_screen - 200
 
         self.canvas = tk.Canvas(self.window, bg='black', width=self.width_window + 100, height=self.height_window)
         self.canvas.grid()
-
-        self.canvas.bind("<Button-1>", self.on_click)
-        
-        self.ball1 = self.canvas.create_oval(10, 10, 35, 35, fill='white')
 
         self.canvas.bind("<Button-1>", self.on_click)
         
@@ -53,10 +53,9 @@ class Interface:
         self.menu1.add_separator()
         self.menu1.add_command(label="EXIT", command=self.pop)
         menubar.add_cascade(label="Mouvement", menu=self.menu1)
-        
+
         menu2 = tk.Menu(menubar, tearoff=0)
         menu2.add_command(label="DOWNLOAD", command=self.download_canva)
-        
         menubar.add_cascade(label="Sauvegarder", menu=menu2)
 
         self.window.config(menu=menubar)
@@ -74,7 +73,7 @@ class Interface:
             self.update_position()
         except Exception as e:
             tkm.showwarning("Erreur Bluetooth", f"Connexion au robot échouée :\n{e}")
-
+    
     
     def update_position(self):
         try:
@@ -83,21 +82,24 @@ class Interface:
             self.window.after(200, self.update_position) 
         except Exception as e:
             print(f"Error updating position: {e}")
+            
+
 
 
     def update_canvas(self):
-        aggrandissement = 3
-        decalage = 400
+        aggrandissement = 2
+        decalage_x = 600
+        decalage_y = 400
         
         x1, y1 = self.position[-2]   
         x2, y2 = self.position[-1]
-    
-        x1p = x1 * aggrandissement + decalage
-        x2p = x2 * aggrandissement + decalage
-        y1p = y1 * aggrandissement + decalage
-        y2p = y2 * aggrandissement + decalage
-        self.line = self.canvas.create_line(x1p, y1p, x2p, y2p, fill="ivory")
         
+        x1p = x1 * aggrandissement + decalage_x
+        x2p = x2 * aggrandissement + decalage_x
+        y1p = y1 * aggrandissement + decalage_y
+        y2p = y2 * aggrandissement + decalage_y
+        self.line = self.canvas.create_line(x1p, y1p, x2p, y2p, fill="ivory", tags="ligne", width= 4, dash = (6, 1))
+    
 
     def start(self):
         if not self.pilotage:
@@ -113,6 +115,7 @@ class Interface:
         if self.pilotage:
             self.pilotage.start_moving()
 
+
     def stop(self):
         self.canvas.itemconfig(self.ball1, fill="red")
         if self.pilotage:
@@ -121,6 +124,7 @@ class Interface:
 
 
     def rotate_canva(self):  
+        pass # Jusqu'a ce qu'on ait une version qui fonctionne
         for line in self.lines_canva:
             x1, y1, x2, y2 = self.canvas.coords(line)
 
@@ -141,36 +145,62 @@ class Interface:
     def download_canva(self):
         self.window.update() 
 
-        x = self.window.winfo_rootx()
-        y = self.window.winfo_rooty()
-        w = x + self.window.winfo_width()
-        h = y + self.window.winfo_height()
+       
+        offset_x = 110
+        offset_y = 100
+        frame_width = 1600
+        frame_height = 690
 
-        img = ImageGrab.grab(bbox=(x, y, w, h))
+    
+        canvas_x = self.canvas.winfo_rootx()
+        canvas_y = self.canvas.winfo_rooty()
+
+        
+        x1 = canvas_x + offset_x
+        y1 = canvas_y + offset_y
+        x2 = x1 + frame_width
+        y2 = y1 + frame_height
+        
+        img = ImageGrab.grab(bbox=(x1, y1, x2, y2))
         img.save("interface.png")
         
         print("Image sauvegardée sous 'interface.png'")
         print("Image sauvegardée dans :", os.path.abspath("interface.png"))
+
+    
+    def effacer_zone(self):
+        self.canvas.delete("ligne")
+
+
+    def contour(self):
+        tableau_de_collisions = self.pilotage.pos_collisions
+        
+        #self.canvas.delete("ligne")
+        self.tr.afficher_points(tableau_de_collisions , canvas= self.canvas)
+        self.tr.afficher_contour(tableau_de_collisions , canvas = self.canvas)
 
 
     def create_zone(self):
         self.canvas.itemconfigure(self.image, state='hidden')
         self.Ok = True
         zone1 = self.canvas.create_rectangle(
-        self.width_window - self.width_window * 0.94,
-        self.height_window - self.height_window * 0.90,
-        self.width_window,self.height_window - 60, outline="ivory", width=2)
-
+            self.width_window - self.width_window * 0.94,
+            self.height_window - self.height_window * 0.90,
+            self.width_window,self.height_window - 60, outline="ivory", width=2)
         self.carre = zone1
 
         self.button_name = ["Contour", "Rotation"]
-        self.button1 = tk.Button(self.window, text="Contour", command=None, width=13)
+        self.button1 = tk.Button(self.window, text="Contour", command=self.contour, width=13)
         self.boutons.append(self.button1)
         self.button1.place(x=self.width_window - self.width_window * 0.96, y=10)
 
-        self.button2 = tk.Button(self.window, text="Rotation", command=self.rotate_canva, width=13)
+        self.button2 = tk.Button(self.window, text="Effacer Tout", command=self.effacer_zone , width=13)
         self.boutons.append(self.button2)
         self.button2.place(x=self.width_window - self.width_window * 0.96 + 110, y=10)
+        
+        self.button3 = tk.Button(self.window, text="Rotation", command=self.rotate_canva, width=13)
+        self.boutons.append(self.button3)
+        self.button3.place(x=self.width_window - self.width_window * 0.96 + 220, y=10)
 
 
     def pop(self):
@@ -184,11 +214,11 @@ class Interface:
         if 0 <= event.x <= self.width_window and 0 <= event.y <= self.height_window:
             self.start()
             self.create_zone()
+            self.window.unbind("Button-1")
 
 
     def run(self):
         self.window.mainloop()
-
 
 
 if __name__ == "__main__":
