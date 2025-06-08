@@ -3,36 +3,33 @@ import tkinter.messagebox as tkm
 from tkinter import simpledialog
 from PIL import Image, ImageTk, ImageGrab
 from pilotage import Pilotage
-from math import sin,cos
+from math import sin,cos,pi
 import traitement as Tr
+import numpy as np
 import threading
 import os
-import time
 
 
 class Interface:
     def __init__(self):
-
         self.tr = Tr.Traitement()
-        self.EPOCH = time.time()
         
         self.window = tk.Tk()
-        self.window.title("Zone detector 3000")
+        self.window.title("zone detector 3000")
 
         width_screen = self.window.winfo_screenwidth()
         height_screen = self.window.winfo_screenheight()
 
-        self.width_window = width_screen - 200
-        self.height_window = height_screen - 200
+        self.width_window = width_screen 
+        self.height_window = height_screen - 90
 
-        self.canvas = tk.Canvas(self.window, bg='black', width=self.width_window + 100, height=self.height_window)
+        self.canvas = tk.Canvas(self.window, bg='black', width=self.width_window , height=self.height_window)
         self.canvas.grid()
 
         self.canvas.bind("<Button-1>", self.on_click)
         
         self.ball1 = self.canvas.create_oval(10, 10, 35, 35, fill='white')
         self.carre = None
-        self.boutons = []
         
         img = Image.open("detector3000.png")
         img = img.resize((self.width_window, self.height_window), Image.LANCZOS)
@@ -41,8 +38,7 @@ class Interface:
         self.image = self.canvas.create_image(
             self.width_window // 2,
             self.height_window // 2,
-            image=self.im
-        )
+            image=self.im)
         self.canvas.image = self.im
 
         menubar = tk.Menu(self.window)
@@ -60,7 +56,7 @@ class Interface:
 
         self.window.config(menu=menubar)
         self.position = [(0, 0), (0, 0)]
-
+        self.lines_canva = []
 
         # Initialisation du pilotage en thread
         self.pilotage = None
@@ -82,8 +78,6 @@ class Interface:
             self.window.after(200, self.update_position) 
         except Exception as e:
             print(f"Error updating position: {e}")
-            
-
 
 
     def update_canvas(self):
@@ -93,13 +87,15 @@ class Interface:
         
         x1, y1 = self.position[-2]   
         x2, y2 = self.position[-1]
-        
+       
         x1p = x1 * aggrandissement + decalage_x
         x2p = x2 * aggrandissement + decalage_x
         y1p = y1 * aggrandissement + decalage_y
         y2p = y2 * aggrandissement + decalage_y
-        self.line = self.canvas.create_line(x1p, y1p, x2p, y2p, fill="ivory", tags="ligne", width= 4, dash = (6, 1))
-    
+        self.line = self.canvas.create_line(x1p, y1p, x2p, y2p,
+            fill="ivory", tags="line", width= 2)
+        self.lines_canva.append(self.line)
+        
 
     def start(self):
         if not self.pilotage:
@@ -123,84 +119,133 @@ class Interface:
             self.pilotage.stop_moving()
 
 
-    def rotate_canva(self):  
-        pass # Jusqu'a ce qu'on ait une version qui fonctionne
-        for line in self.lines_canva:
-            x1, y1, x2, y2 = self.canvas.coords(line)
-
-            #ANGLE = int(input("Quel est votre angle de rotation ? (ex : pi/3)"))
-            ANGLE = simpledialog.askstring("rotate canva", "Quel est votre angle de rotation ? (ex : pi/3)")
-            TRANSLATION = 100
-            print("l'angle saisi est : ", ANGLE)
-
-            x1p = (x1 * cos(ANGLE) - y1 * sin(ANGLE)) + TRANSLATION
-            y1p = (x1 * sin(ANGLE) + y1 * cos(ANGLE)) + TRANSLATION
-            x2p = (x2 * cos(ANGLE) - y2 * sin(ANGLE)) + TRANSLATION
-            y2p = (x2 * sin(ANGLE) + y2 * cos(ANGLE)) + TRANSLATION
-
-            self.canvas.delete(line)
-            self.canvas.create_line(x1p, y1p, x2p, y2p, fill="light blue")
-
-
-    def download_canva(self):
-        self.window.update() 
-
-       
-        offset_x = 110
-        offset_y = 100
-        frame_width = 1600
-        frame_height = 690
-
-    
-        canvas_x = self.canvas.winfo_rootx()
-        canvas_y = self.canvas.winfo_rooty()
-
-        
-        x1 = canvas_x + offset_x
-        y1 = canvas_y + offset_y
-        x2 = x1 + frame_width
-        y2 = y1 + frame_height
-        
-        img = ImageGrab.grab(bbox=(x1, y1, x2, y2))
-        img.save("interface.png")
-        
-        print("Image sauvegardée sous 'interface.png'")
-        print("Image sauvegardée dans :", os.path.abspath("interface.png"))
-
-    
-    def effacer_zone(self):
-        self.canvas.delete("ligne")
-
-
+#Fonctions liées aux boutons
     def contour(self):
         tableau_de_collisions = self.pilotage.pos_collisions
-        
-        #self.canvas.delete("ligne")
         self.tr.afficher_points(tableau_de_collisions , canvas= self.canvas)
         self.tr.afficher_contour(tableau_de_collisions , canvas = self.canvas)
 
 
+    def rotate_canva(self):
+        self.delete_canva()
+        s_xb = 0
+        s_yb = 0
+        nb = len(self.pilotage.pos_collisions)
+
+        for i in range(nb):
+            if self.pilotage.pos_collisions:
+                xb, yb = self.pilotage.pos_collisions[i]
+                s_xb += xb
+                s_yb += yb
+
+        if nb > 0:
+            g_xb, g_yb = s_xb / nb, s_yb / nb
+        
+        ANGLE = simpledialog.askstring("Rotate canva", "Quel est votre angle de rotation ? (en degré)")
+        ANGLE = float(ANGLE) * pi / 180
+        ca = cos(ANGLE)
+        sa = sin(ANGLE)
+        rot_mat = np.array([[ca, -sa], 
+                            [sa, ca]])
+
+        for i in range(nb):
+            if self.pilotage.pos_collisions:
+                xb, yb = self.pilotage.pos_collisions[i]
+                xb -= g_xb
+                yb -= g_yb
+
+                rotated = np.array([xb, yb]) @ rot_mat
+
+                x1b = rotated[0] + g_xb
+                y1b = rotated[1] + g_yb
+
+                self.pilotage.pos_collisions[i] = (x1b, y1b)
+        self.canvas.delete("boules")
+        self.canvas.delete("contour")
+        tableau_de_collisions = self.pilotage.pos_collisions
+        self.tr.afficher_points(tableau_de_collisions, canvas=self.canvas)
+        self.tr.afficher_contour(tableau_de_collisions, canvas=self.canvas)
+
+
+
+    def translate_canva(self):
+        self.delete_canva()
+        input_str = simpledialog.askstring("Translation", "Entrez dx et dy séparés par une virgule (ex: 10, 20) :")
+        dx_str, dy_str = input_str.split(",")
+        TRANSLATION_x = float(dx_str.strip())
+        TRANSLATION_y = float(dy_str.strip())
+
+        for line in self.lines_canva[:]:
+            if self.canvas.coords(line):
+            
+                x1, y1, x2, y2 = self.canvas.coords(line)
+
+                x1t = x1 + float(TRANSLATION_x)
+                y1t = y1 + float(TRANSLATION_y)
+                x2t = x2 + float(TRANSLATION_x) 
+                y2t = y2 + float(TRANSLATION_y)
+
+                self.canvas.delete(line)
+                self.lines_canva.remove(line)
+                translated_line = self.canvas.create_line(x1t, y1t, x2t, y2t, fill="ivory", width= 2,tags="line")
+                self.lines_canva.append(translated_line)
+
+        for i in range(len(self.pilotage.pos_collisions)):
+            if self.pilotage.pos_collisions:
+                x, y = self.pilotage.pos_collisions[i]
+                x_new = x + float(TRANSLATION_x)
+                y_new = y + float(TRANSLATION_y)
+                self.pilotage.pos_collisions[i] = (x_new, y_new)
+        self.canvas.delete("boules")
+        self.canvas.delete("contour")
+        tableau_de_collisions = self.pilotage.pos_collisions
+        self.tr.afficher_points(tableau_de_collisions , canvas= self.canvas)
+        self.tr.afficher_contour(tableau_de_collisions , canvas = self.canvas)
+
+    
+    def delete_canva(self):
+        self.canvas.delete("line")
+
+
+#Fonction liée au click de départ
     def create_zone(self):
         self.canvas.itemconfigure(self.image, state='hidden')
         self.Ok = True
-        zone1 = self.canvas.create_rectangle(
-            self.width_window - self.width_window * 0.94,
-            self.height_window - self.height_window * 0.90,
-            self.width_window,self.height_window - 60, outline="ivory", width=2)
-        self.carre = zone1
 
-        self.button_name = ["Contour", "Rotation"]
+        self.x1_z = self.width_window - self.width_window * 0.94
+        self.y1_z = self.height_window - self.height_window * 0.90
+        self.x2_z = self.width_window -  self.width_window * 0.06
+        self.y2_z = self.height_window - self.height_window * 0.10
+
+        self.carre = self.canvas.create_rectangle(self.x1_z, self.y1_z, self.x2_z, self.y2_z, outline="ivory", width=2)
+
         self.button1 = tk.Button(self.window, text="Contour", command=self.contour, width=13)
-        self.boutons.append(self.button1)
         self.button1.place(x=self.width_window - self.width_window * 0.96, y=10)
 
-        self.button2 = tk.Button(self.window, text="Effacer Tout", command=self.effacer_zone , width=13)
-        self.boutons.append(self.button2)
+        self.button2 = tk.Button(self.window, text="Rotation", command=self.rotate_canva, width=13)
         self.button2.place(x=self.width_window - self.width_window * 0.96 + 110, y=10)
-        
-        self.button3 = tk.Button(self.window, text="Rotation", command=self.rotate_canva, width=13)
-        self.boutons.append(self.button3)
+
+        self.button3 = tk.Button(self.window, text="Translate", command=self.translate_canva, width=13)
         self.button3.place(x=self.width_window - self.width_window * 0.96 + 220, y=10)
+
+        self.button4 = tk.Button(self.window, text="Delete", command = self.delete_canva, width=13)
+        self.button4.place(x = self.width_window - self.width_window * 0.96 + 330, y=10)
+
+
+#Fonctions liées aux menus
+    def download_canva(self):
+        self.window.update() 
+     
+        x = self.x1_z + 20
+        y = self.y1_z + 70
+        w = self.x2_z + 365
+        h = self.y2_z + 230
+        
+        img = ImageGrab.grab(bbox=(x, y, w, h))
+        img.save("interface.png")
+        
+        print("Image sauvegardée sous 'interface.png'")
+        print("Image sauvegardée dans :", os.path.abspath("interface.png"))
 
 
     def pop(self):
@@ -211,10 +256,11 @@ class Interface:
 
 
     def on_click(self, event):
+        self.window.unbind("Button-1")
         if 0 <= event.x <= self.width_window and 0 <= event.y <= self.height_window:
             self.start()
             self.create_zone()
-            self.window.unbind("Button-1")
+            
 
 
     def run(self):

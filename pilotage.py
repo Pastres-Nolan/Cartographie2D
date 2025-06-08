@@ -7,9 +7,10 @@ from threading import Thread, Event
 import random as rd
 import time
 
-
+    
 class Pilotage:
     def __init__(self, toy_name="SB-DB73", bot_speed=30, collision_time=5, sampling_rate=0.2):
+
         self.BOT_SPEED = bot_speed
         self.COLLISION_TIME = collision_time
         self.SAMPLING_RATE = sampling_rate
@@ -26,9 +27,8 @@ class Pilotage:
         self.bot = SpheroEduAPI(self.toy)
 
 
-
-
     def policia(self):
+
         self.bot.set_front_led(Color(255, 0, 0))
         self.bot.set_back_led(Color(0, 0, 255))
         #Wee Woo
@@ -37,20 +37,22 @@ class Pilotage:
 
 
     def random_collision_SLAM(self):
+
         self.bot.set_speed(self.BOT_SPEED)
         self.bot.set_heading(0)
         self.bot.set_stabilization(True)
        
         while not self.running.is_set():
-            #print("Données reçues" if self.recoit_donnees else "Aucune donnée") # defois le robot ne fonctionne juste pas
+            #print("Données reçues" if self.recoit_donnees else "Aucune donnée") 
             self.recoit_donnees = False  
             if self.BOT_SPEED and (time.time()-self.EPOCH) >7: # permet de ne pas prendre le départ du robot comme point de collision (le départ est à 4-5 secondes)
+
                 self.bot.roll(self.bot.get_heading() + 180 + 50 * rd.randint(-1, 1), self.BOT_SPEED, 1)
                 for i in range(4):
+
                     self.bot.roll(self.bot.get_heading(), self.BOT_SPEED, 1)
                 collision_position = self.pos_all[-1]
                 self.pos_collisions.append(collision_position)
-                
             time.sleep(1)
 
 
@@ -76,7 +78,6 @@ class Pilotage:
                 self.pos_all.append(position)
                 self.pos_all.pop(0)
                 
-              
                 time.sleep(dt)
 
 

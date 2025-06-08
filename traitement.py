@@ -76,7 +76,7 @@ class Traitement:
             x2p_affichage = self.decalage_x + x1*self.aggrandissement + self.rayon
             y1p_affichage = self.decalage_y + y1*self.aggrandissement - self.rayon
             y2p_affichage = self.decalage_y + y1*self.aggrandissement + self.rayon
-            canvas.create_oval(x1p_affichage, y1p_affichage, x2p_affichage, y2p_affichage, fill=couleur)
+            canvas.create_oval(x1p_affichage, y1p_affichage, x2p_affichage, y2p_affichage, fill=couleur,tags='boules')
 
 
     def afficher_contour(self, tableau_pts, couleur='white', largeur=2, canvas = None):
@@ -88,19 +88,18 @@ class Traitement:
             y1 = self.decalage_y + contour_final[i][1]*self.aggrandissement
             x2 = self.decalage_x + contour_final[i+1][0]*self.aggrandissement
             y2 = self.decalage_y + contour_final[i+1][1]*self.aggrandissement
-            canvas.create_line(x1, y1, x2, y2, fill=couleur, width=largeur)
+            canvas.create_line(x1, y1, x2, y2, fill=couleur, width=largeur,tags='contour')
 
 
 if __name__ == "__main__":
-    tableau_pts = [(8,-4),(-8,10),(-8,-2),(11,2),(10,10),(2,-8),(-2,-8),(12,6),(-10,4),(12,4),(0,10),(9,-2),(-2,10),(-4,-6),(-6,10),(-10,0),(8,10),(10,0),(4,-8),(6,10),(-10,2),(12,8),(0,-8),(2,10),(6,-8),(-4,10),(-10,6),(12,10),(-6,-4),(7,-6),(-8,10),(-10,10)]
-    
+
+    tableau_pts = [(25.884486608083332, 2.591333656558904), (25.647374190184408, 13.57937469602671), (23.46514497412033, -7.647868125648587), (-25.58859495138687, 34.882765222761606), (-31.247853554465856, -10.858144980843468), (-37.289085989961364, -5.213635449083924), (-35.39823418431235, -11.092476236549066), (-32.6740039406639, 5.2503985426408555), (-63.76992791918652, 2.6708117339562425), (-40.731773483976724, -2.234204473641122), (-51.47154459008835, 0.8746593970318703), (-18.96151183290534, 21.158825984550088), (-20.979168990343318, -21.84603429853468), (-21.90918359820481, 17.7934776098926), (-22.762230576442768, 5.518729966571945), (-19.973065336663378, 13.07874494221834), (-22.28186405821009, 8.988469340034044), (-28.430359668057974, 5.931588200317328)]
+
     root = tk.Tk()
     canvas = tk.Canvas(root, width=1200, height=800, bg="black")
     canvas.pack()
+
     t = Traitement()
     t.afficher_points(tableau_pts, canvas = canvas)
     t.afficher_contour(tableau_pts, canvas = canvas)
-    
-
-    
     root.mainloop()
