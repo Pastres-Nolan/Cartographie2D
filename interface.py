@@ -95,8 +95,14 @@ class Interface:
         self.line = self.canvas.create_line(x1p, y1p, x2p, y2p,
             fill="ivory", tags="line", width= 2)
         self.lines_canva.append(self.line)
-        
 
+    
+    def move_bot(self):
+        self.canvas.itemconfig(self.ball1, fill="green")
+        if self.pilotage:
+            self.pilotage.start_moving()
+
+    
     def start(self):
         if not self.pilotage:
             tkm.showerror("Erreur", "Connexion au robot non terminée.")
@@ -104,12 +110,6 @@ class Interface:
         self.canvas.itemconfig(self.ball1, fill="green")
         threading.Thread(target=self.pilotage.start, daemon=True).start()
         self.menu1.entryconfig("Start", command = self.move_bot)
-
-
-    def move_bot(self):
-        self.canvas.itemconfig(self.ball1, fill="green")
-        if self.pilotage:
-            self.pilotage.start_moving()
 
 
     def stop(self):
