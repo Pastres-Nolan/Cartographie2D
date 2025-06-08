@@ -175,21 +175,6 @@ class Interface:
         TRANSLATION_x = float(dx_str.strip())
         TRANSLATION_y = float(dy_str.strip())
 
-        for line in self.lines_canva[:]:
-            if self.canvas.coords(line):
-            
-                x1, y1, x2, y2 = self.canvas.coords(line)
-
-                x1t = x1 + float(TRANSLATION_x)
-                y1t = y1 + float(TRANSLATION_y)
-                x2t = x2 + float(TRANSLATION_x) 
-                y2t = y2 + float(TRANSLATION_y)
-
-                self.canvas.delete(line)
-                self.lines_canva.remove(line)
-                translated_line = self.canvas.create_line(x1t, y1t, x2t, y2t, fill="ivory", width= 2,tags="line")
-                self.lines_canva.append(translated_line)
-
         for i in range(len(self.pilotage.pos_collisions)):
             if self.pilotage.pos_collisions:
                 x, y = self.pilotage.pos_collisions[i]
