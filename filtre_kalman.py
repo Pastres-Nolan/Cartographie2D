@@ -13,7 +13,8 @@ class FK:
         self.H = np.array([[1, 0, 0, 0],
                            [0, 1, 0, 0]])
 
-        self.R = np.eye(2) * 1.0
+        self.R = np.array([[0.7, 0],
+                           [0, 1]]) * 1.0
         self.I = np.eye(4)
 
 

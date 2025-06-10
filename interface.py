@@ -4,7 +4,8 @@ from tkinter import simpledialog
 from PIL import Image, ImageTk, ImageGrab
 from pilotage import Pilotage
 from math import sin,cos,pi
-import traitement as Tr
+import traitement_avec_obstacle as Tr
+import traitement_sans_obstacle as Tr2
 import numpy as np
 import threading
 import os
@@ -13,9 +14,10 @@ import os
 class Interface:
     def __init__(self):
         self.tr = Tr.Traitement()
+        self.tr2 = Tr2.Traitement()
         
         self.window = tk.Tk()
-        self.window.title("zone detector 3000")
+        self.window.title("Zone detector 3000")
 
         width_screen = self.window.winfo_screenwidth()
         height_screen = self.window.winfo_screenheight()
@@ -24,7 +26,7 @@ class Interface:
         self.height_window = height_screen - 90
 
         self.canvas = tk.Canvas(self.window, bg='black', width=self.width_window , height=self.height_window)
-        self.canvas.grid()
+        self.canvas.grid()  
 
         self.canvas.bind("<Button-1>", self.on_click)
         
@@ -93,7 +95,7 @@ class Interface:
         y1p = y1 * aggrandissement + decalage_y
         y2p = y2 * aggrandissement + decalage_y
         self.line = self.canvas.create_line(x1p, y1p, x2p, y2p,
-            fill="ivory", tags="line", width= 2)
+            fill="LemonChiffon4", tags="line", width= 4)
         self.lines_canva.append(self.line)
         
 
@@ -122,8 +124,18 @@ class Interface:
 #Fonctions liées aux boutons
     def contour(self):
         tableau_de_collisions = self.pilotage.pos_collisions
+        self.canvas.delete("boules")
+        self.canvas.delete("contour")
         self.tr.afficher_points(tableau_de_collisions , canvas= self.canvas)
         self.tr.afficher_contour(tableau_de_collisions , canvas = self.canvas)
+
+
+    def contour2(self):
+        tableau_de_collisions = self.pilotage.pos_collisions
+        self.canvas.delete("boules")
+        self.canvas.delete("contour")
+        self.tr2.afficher_points(tableau_de_collisions , canvas= self.canvas, couleur = "red")
+        self.tr2.afficher_contour(tableau_de_collisions , canvas = self.canvas, couleur = "white")
 
 
     def rotate_canva(self):
@@ -204,17 +216,20 @@ class Interface:
 
         self.carre = self.canvas.create_rectangle(self.x1_z, self.y1_z, self.x2_z, self.y2_z, outline="ivory", width=2)
 
-        self.button1 = tk.Button(self.window, text="Contour", command=self.contour, width=13)
+        self.button1 = tk.Button(self.window, text="Contour obstacle", command=self.contour, width=15)
         self.button1.place(x=self.width_window - self.width_window * 0.96, y=10)
 
-        self.button2 = tk.Button(self.window, text="Rotation", command=self.rotate_canva, width=13)
-        self.button2.place(x=self.width_window - self.width_window * 0.96 + 110, y=10)
+        self.button1 = tk.Button(self.window, text="Contour no obstacle", command=self.contour2, width=15)
+        self.button1.place(x=self.width_window - self.width_window * 0.96 + 120 , y=10)
 
-        self.button3 = tk.Button(self.window, text="Translate", command=self.translate_canva, width=13)
-        self.button3.place(x=self.width_window - self.width_window * 0.96 + 220, y=10)
+        self.button2 = tk.Button(self.window, text="Rotation", command=self.rotate_canva, width=15)
+        self.button2.place(x=self.width_window - self.width_window * 0.96 + 240, y=10)
 
-        self.button4 = tk.Button(self.window, text="Delete", command = self.delete_canva, width=13)
-        self.button4.place(x = self.width_window - self.width_window * 0.96 + 330, y=10)
+        self.button3 = tk.Button(self.window, text="Translate", command=self.translate_canva, width=15)
+        self.button3.place(x=self.width_window - self.width_window * 0.96 + 360, y=10)
+
+        self.button4 = tk.Button(self.window, text="Delete", command = self.delete_canva, width=15)
+        self.button4.place(x = self.width_window - self.width_window * 0.96 + 480, y=10)
 
 
 #Fonctions liées aux menus

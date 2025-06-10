@@ -2,20 +2,21 @@ from spherov2 import scanner
 from spherov2.sphero_edu import SpheroEduAPI
 from spherov2.types import Color
 import filtre_kalman as Fk
+from math import sqrt
 import numpy as np
 from threading import Thread, Event
 import random as rd
 import time
 
-    
+#SB-9A4B
+#SB-DB73
 class Pilotage:
-    def __init__(self, toy_name="SB-DB73", bot_speed=30, collision_time=5, sampling_rate=0.2):
-
+    def __init__(self, toy_name="SB-DB73", bot_speed=25, collision_time=5, sampling_rate=0.2):
+        self.THRESHHOLD = 2
         self.BOT_SPEED = bot_speed
         self.COLLISION_TIME = collision_time
         self.SAMPLING_RATE = sampling_rate
         self.EPOCH = time.time()
-        self.recoit_donnees = False
 
         self.fk = Fk.FK()
         self.collision = False
@@ -42,17 +43,13 @@ class Pilotage:
         self.bot.set_heading(0)
         self.bot.set_stabilization(True)
        
-        while not self.running.is_set():
-            #print("Données reçues" if self.recoit_donnees else "Aucune donnée") 
-            self.recoit_donnees = False  
+        while not self.running.is_set(): 
             if self.BOT_SPEED and (time.time()-self.EPOCH) >7: # permet de ne pas prendre le départ du robot comme point de collision (le départ est à 4-5 secondes)
-
-                self.bot.roll(self.bot.get_heading() + 180 + 50 * rd.randint(-1, 1), self.BOT_SPEED, 1)
-                for i in range(4):
-
-                    self.bot.roll(self.bot.get_heading(), self.BOT_SPEED, 1)
                 collision_position = self.pos_all[-1]
                 self.pos_collisions.append(collision_position)
+                self.bot.roll(self.bot.get_heading() + 175 + 50 * rd.randint(-1, 1), self.BOT_SPEED, 1)
+                for i in range(5): # une collion est prise toutes les 1 +5 secondes (en espérant que le robot touche un mur avant de prendre ce point)
+                    self.bot.roll(self.bot.get_heading(), self.BOT_SPEED, 1)
             time.sleep(1)
 
 
@@ -77,7 +74,7 @@ class Pilotage:
                 position = tuple(float(x) for x in self.fk.get_position.ravel())
                 self.pos_all.append(position)
                 self.pos_all.pop(0)
-                
+
                 time.sleep(dt)
 
 
