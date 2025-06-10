@@ -29,7 +29,6 @@ class Interface:
         self.canvas.bind("<Button-1>", self.on_click)
         
         self.ball1 = self.canvas.create_oval(10, 10, 35, 35, fill='white')
-        self.carre = None
         
         img = Image.open("detector3000.png")
         img = img.resize((self.width_window, self.height_window), Image.LANCZOS)
