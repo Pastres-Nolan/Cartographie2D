@@ -8,11 +8,10 @@ from threading import Thread, Event
 import random as rd
 import time
 
-#SB-9A4B
-#SB-DB73
+
 class Pilotage:
     def __init__(self, toy_name="SB-DB73", bot_speed=25, collision_time=5, sampling_rate=0.2):
-        self.THRESHHOLD = 2
+        # Paramètres du robot
         self.BOT_SPEED = bot_speed
         self.COLLISION_TIME = collision_time
         self.SAMPLING_RATE = sampling_rate
@@ -38,7 +37,7 @@ class Pilotage:
 
 
     def random_collision_SLAM(self):
-
+        # Gestion des déplacements aléatoires avec détection des collisions
         self.bot.set_speed(self.BOT_SPEED)
         self.bot.set_heading(0)
         self.bot.set_stabilization(True)
@@ -47,6 +46,7 @@ class Pilotage:
             if self.BOT_SPEED and (time.time()-self.EPOCH) >7: # permet de ne pas prendre le départ du robot comme point de collision (le départ est à 4-5 secondes)
                 collision_position = self.pos_all[-1]
                 self.pos_collisions.append(collision_position)
+                # Rotation aléatoire après collision
                 self.bot.roll(self.bot.get_heading() + 175 + 50 * rd.randint(-1, 1), self.BOT_SPEED, 1)
                 for i in range(5): # une collion est prise toutes les 1 +5 secondes (en espérant que le robot touche un mur avant de prendre ce point)
                     self.bot.roll(self.bot.get_heading(), self.BOT_SPEED, 1)
@@ -54,6 +54,7 @@ class Pilotage:
 
 
     def position_tracking(self):
+        # Suivi continu de la position via filtre de Kalman
         dt = self.SAMPLING_RATE
         while True:
             self.policia()
@@ -83,6 +84,7 @@ class Pilotage:
 
 
     def start(self):
+        # Lance le suivi de position dans un thread et la boucle de pilotage principal
         with self.bot:
             Thread(target=self.position_tracking).start()
             try:
