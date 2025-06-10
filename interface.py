@@ -31,7 +31,6 @@ class Interface:
         self.canvas.bind("<Button-1>", self.on_click)
         
         self.ball1 = self.canvas.create_oval(10, 10, 35, 35, fill='white')
-        self.carre = None
         
         img = Image.open("detector3000.png")
         img = img.resize((self.width_window, self.height_window), Image.LANCZOS)
@@ -97,8 +96,14 @@ class Interface:
         self.line = self.canvas.create_line(x1p, y1p, x2p, y2p,
             fill="LemonChiffon4", tags="line", width= 4)
         self.lines_canva.append(self.line)
-        
 
+    
+    def move_bot(self):
+        self.canvas.itemconfig(self.ball1, fill="green")
+        if self.pilotage:
+            self.pilotage.start_moving()
+
+    
     def start(self):
         if not self.pilotage:
             tkm.showerror("Erreur", "Connexion au robot non terminée.")
@@ -106,12 +111,6 @@ class Interface:
         self.canvas.itemconfig(self.ball1, fill="green")
         threading.Thread(target=self.pilotage.start, daemon=True).start()
         self.menu1.entryconfig("Start", command = self.move_bot)
-
-
-    def move_bot(self):
-        self.canvas.itemconfig(self.ball1, fill="green")
-        if self.pilotage:
-            self.pilotage.start_moving()
 
 
     def stop(self):
